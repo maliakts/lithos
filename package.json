@@ -1,0 +1,28 @@
+{
+  "name": "lithos",
+  "version": "1.0.0",
+  "description": "Türkiye için canlı deprem haritası: AFAD, Kandilli ve USGS verisini çapraz doğrular; Open-Meteo hava durumu ve Telegram bildirimleri sunar",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "verify": "node scripts/verify.js",
+    "test": "node --test",
+    "telegram": "node scripts/telegram-baglanti.js"
+  },
+  "keywords": [
+    "deprem",
+    "earthquake",
+    "turkey",
+    "afad",
+    "kandilli",
+    "usgs",
+    "open-meteo",
+    "telegram-bot",
+    "leaflet",
+    "sse"
+  ],
+  "license": "MIT"
+}

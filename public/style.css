@@ -1,0 +1,157 @@
+:root {
+  --bg: #000;
+  --text: #f5f5f7;
+  --muted: rgba(235, 235, 245, 0.6);
+  --faint: rgba(235, 235, 245, 0.3);
+  --line: rgba(255, 255, 255, 0.1);
+  --glass: rgba(28, 28, 30, 0.58);
+  --green: #30d158;
+  --yellow: #ffd60a;
+  --orange: #ff9f0a;
+  --red: #ff453a;
+  --blue: #0a84ff;
+  --ease: cubic-bezier(0.2, 0.9, 0.3, 1);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--text); font: 15px/1.47 var(--font); letter-spacing: 0.005em; overflow: hidden; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 8px; }
+
+#map { position: fixed; inset: 0; background: #0b0d10; }
+.leaflet-container { font-family: var(--font); background: #0b0d10; }
+.leaflet-control-attribution { background: rgba(0, 0, 0, 0.45) !important; color: var(--muted) !important; backdrop-filter: blur(10px); }
+.leaflet-control-attribution a { color: var(--muted) !important; }
+
+/* Materyal: şeffaf, bulanık, üst kenarında ışık çizgisi */
+.glass {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  backdrop-filter: blur(30px) saturate(180%);
+  border: 1px solid var(--line);
+  border-top-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ---------- Panel ---------- */
+#panel {
+  position: fixed; z-index: 1000; top: 14px; left: 14px; bottom: 14px; width: 372px;
+  border-radius: 26px; display: flex; flex-direction: column; overflow: hidden;
+}
+.grabber { display: none; }
+header { padding: 18px 18px 6px; }
+.brand { display: flex; align-items: center; justify-content: space-between; }
+h1 { margin: 0; font: 700 28px/1.1 var(--font-display); letter-spacing: -0.022em; }
+.live { font-size: 12px; font-weight: 600; color: var(--green); display: inline-flex; align-items: center; gap: 6px; }
+.live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 0 currentColor; animation: beat 2.4s var(--ease) infinite; }
+.live.off { color: var(--red); }
+.live.off::before { animation: none; }
+@keyframes beat { 0% { box-shadow: 0 0 0 0 rgba(48, 209, 88, 0.6); } 70%, 100% { box-shadow: 0 0 0 8px rgba(48, 209, 88, 0); } }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); font-size: 12px; color: var(--muted); letter-spacing: 0.01em; }
+.chip i { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+.chip.warn i { background: var(--orange); }
+.chip.bad i { background: var(--red); }
+.chip.warn, .chip.bad { color: var(--text); }
+
+.controls { padding: 8px 18px 12px; display: grid; gap: 8px; border-bottom: 1px solid var(--line); }
+.seg { display: flex; background: rgba(118, 118, 128, 0.24); border-radius: 10px; padding: 2px; gap: 2px; }
+.seg button { flex: 1; padding: 6px 4px; border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--text); transition: background 0.25s var(--ease), box-shadow 0.25s var(--ease); }
+.seg button:active { transform: scale(0.97); }
+.seg button[aria-checked="true"] { background: rgba(255, 255, 255, 0.2); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35); font-weight: 600; }
+
+.views { position: relative; flex: 1; min-height: 0; }
+.list { list-style: none; margin: 0; padding: 4px 0 20px; height: 100%; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.row { width: 100%; display: flex; align-items: center; gap: 14px; padding: 11px 18px; text-align: left; transition: background 0.2s; }
+.row:hover { background: rgba(255, 255, 255, 0.06); }
+.row:active { background: rgba(255, 255, 255, 0.12); }
+.row.sel { background: rgba(10, 132, 255, 0.22); }
+.badge { flex: none; width: 52px; padding: 8px 0; text-align: center; border-radius: 14px; font: 700 18px/1 var(--font-display); letter-spacing: -0.01em; color: #111; font-variant-numeric: tabular-nums; }
+.meta { min-width: 0; display: grid; }
+.meta b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.meta small { color: var(--muted); font-size: 13px; letter-spacing: 0.01em; }
+.warnmark { color: var(--orange); font-weight: 700; }
+.empty { padding: 36px 24px; text-align: center; color: var(--muted); }
+
+/* ---------- Ayrıntı ---------- */
+.detail { position: absolute; inset: 0; overflow-y: auto; padding: 8px 18px 24px; overscroll-behavior: contain; animation: slideIn 0.42s var(--ease); }
+.detail.out { animation: slideOut 0.3s var(--ease) forwards; }
+@keyframes slideIn { from { opacity: 0; transform: translateX(28px); } }
+@keyframes slideOut { to { opacity: 0; transform: translateX(28px); } }
+.back { color: var(--blue); font-size: 15px; padding: 8px 0; display: inline-flex; gap: 4px; align-items: center; }
+.bigmag { display: flex; align-items: center; gap: 16px; margin: 6px 0 14px; }
+.bigmag .badge { width: 76px; padding: 14px 0; font-size: 32px; border-radius: 20px; }
+.bigmag h2 { margin: 0; font: 600 21px/1.2 var(--font-display); letter-spacing: -0.015em; }
+.bigmag p { margin: 2px 0 0; color: var(--muted); }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border-radius: 14px; overflow: hidden; margin-bottom: 14px; }
+.grid div { background: rgba(44, 44, 46, 0.7); padding: 12px 14px; }
+.grid small { display: block; color: var(--muted); font-size: 12px; letter-spacing: 0.02em; text-transform: uppercase; }
+.grid span { font-weight: 600; font-variant-numeric: tabular-nums; }
+.srcs { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-variant-numeric: tabular-nums; }
+.srcs th { text-align: left; color: var(--muted); font-size: 12px; font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase; padding: 0 0 6px; }
+.srcs td { padding: 9px 0; border-top: 1px solid var(--line); }
+.note { padding: 12px 14px; border-radius: 12px; background: rgba(255, 159, 10, 0.16); color: var(--text); font-size: 14px; margin-bottom: 12px; }
+.note.info { background: rgba(255, 255, 255, 0.07); color: var(--muted); }
+.links a { color: var(--blue); text-decoration: none; margin-right: 14px; font-size: 14px; }
+
+/* ---------- Hava durumu ---------- */
+.wx { padding: 14px 16px; border-radius: 16px; margin-bottom: 14px; background: linear-gradient(160deg, rgba(10, 132, 255, 0.28), rgba(94, 92, 230, 0.2)); border: 1px solid var(--line); }
+.wx-main { display: flex; align-items: center; gap: 12px; }
+.wx-ico { font-size: 34px; line-height: 1; }
+.wx-temp { font: 600 40px/1 var(--font-display); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.wx-txt { display: grid; min-width: 0; }
+.wx-txt small, .wx-sub { color: var(--muted); font-size: 13px; letter-spacing: 0.01em; }
+.wx-sub { display: block; margin-top: 8px; }
+.glass-popup .leaflet-popup-content-wrapper { background: var(--glass); color: var(--text); -webkit-backdrop-filter: blur(30px) saturate(180%); backdrop-filter: blur(30px) saturate(180%); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45); }
+.glass-popup .leaflet-popup-content { margin: 6px; }
+.glass-popup .leaflet-popup-content .wx { margin: 0; }
+.glass-popup .leaflet-popup-tip { background: var(--glass); }
+
+/* ---------- Harita kontrolleri ---------- */
+.mapctl { position: fixed; z-index: 1000; top: 14px; right: 14px; display: flex; gap: 8px; align-items: center; padding: 6px; border-radius: 16px; }
+.mapctl .seg { background: rgba(118, 118, 128, 0.2); }
+.mapctl .seg button { padding: 6px 12px; }
+.toggle { padding: 7px 12px; border-radius: 10px; font-size: 13px; font-weight: 500; background: rgba(118, 118, 128, 0.2); transition: background 0.25s var(--ease); }
+.toggle[aria-pressed="true"] { background: var(--orange); color: #111; font-weight: 600; }
+.leaflet-bottom.leaflet-right { margin-bottom: 4px; }
+
+.toast { position: fixed; z-index: 1100; top: 72px; left: 50%; transform: translateX(-50%); padding: 12px 18px; border-radius: 18px; font-weight: 600; animation: drop 0.5s var(--ease); }
+@keyframes drop { from { opacity: 0; transform: translate(-50%, -14px) scale(0.96); } }
+
+/* Yeni depremde yayılan halka */
+.pulse { position: relative; display: block; width: 44px; height: 44px; }
+.pulse::before, .pulse::after { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--c); opacity: 0; animation: ripple 2.6s var(--ease) infinite; }
+.pulse::after { animation-delay: 1.3s; }
+@keyframes ripple { 0% { transform: scale(0.25); opacity: 0.9; } 100% { transform: scale(1); opacity: 0; } }
+
+/* ---------- Mobil: alt sayfa ---------- */
+@media (max-width: 760px) {
+  #panel {
+    top: auto; left: 8px; right: 8px; bottom: 0; width: auto; height: 88vh; height: 88dvh;
+    border-radius: 26px 26px 0 0; will-change: transform; touch-action: pan-y;
+  }
+  .grabber { display: flex; justify-content: center; padding: 8px 0 2px; cursor: grab; touch-action: none; }
+  .grabber span { width: 38px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.35); }
+  #head { touch-action: none; }
+  header { padding-top: 6px; }
+  .mapctl { top: 10px; right: 10px; left: 10px; justify-content: space-between; }
+  .mapctl .seg button { padding: 6px 10px; }
+}
+
+/* ---------- Erişilebilirlik ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  .pulse { display: none; }
+  .detail { animation: fadeOnly 0.2s ease; }
+  @keyframes fadeOnly { from { opacity: 0; } }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass { background: #1c1c1e; -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+@media (prefers-contrast: more) {
+  .glass { background: #000; border-color: #fff; }
+  .meta small, .chip, .grid small { color: #fff; }
+}

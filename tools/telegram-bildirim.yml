@@ -1,0 +1,29 @@
+name: Telegram deprem bildirimi
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+concurrency:
+  group: telegram-bildirim
+  cancel-in-progress: false
+jobs:
+  bildir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Gönderilmiş depremleri geri yükle
+        uses: actions/cache@v4
+        with:
+          path: .cache
+          key: posted-${{ github.run_id }}
+          restore-keys: posted-
+      - name: Yeni depremleri kanala gönder
+        run: node scripts/ci-bildirim.js
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL: ${{ secrets.TELEGRAM_CHANNEL }}
+          CHANNEL_MIN_MAG: ${{ vars.CHANNEL_MIN_MAG || '2.5' }}
