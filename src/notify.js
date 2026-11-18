@@ -17,22 +17,43 @@ export function matches(sub, e) {
   return true;
 }
 
+/** Büyüklüğü herkesin anlayacağı dile çevirir. */
+export function magLevel(m) {
+  if (m < 2) return { icon: '🟢', name: 'Çok hafif', effect: 'Genellikle hissedilmez, aletlerle kaydedilir.' };
+  if (m < 3) return { icon: '🟢', name: 'Hafif', effect: 'Çoğu kişi hissetmez; sessiz ortamda hafif sallantı olabilir.' };
+  if (m < 4) return { icon: '🟡', name: 'Orta-hafif', effect: 'Yakın çevrede hissedilir, hasar beklenmez.' };
+  if (m < 5) return { icon: '🟠', name: 'Orta', effect: 'Geniş alanda hissedilir; eşyalar sallanır, zayıf yapılarda küçük hasar olabilir.' };
+  if (m < 6) return { icon: '🔴', name: 'Kuvvetli', effect: 'Kuvvetle hissedilir; dayanıksız yapılarda hasar olabilir.' };
+  if (m < 7) return { icon: '🔴', name: 'Çok kuvvetli', effect: 'Yıkıcı olabilir; merkez üssüne yakın yerlerde ciddi hasar riski var.' };
+  return { icon: '🆘', name: 'Büyük', effect: 'Çok yıkıcı; geniş alanda ağır hasar riski var.' };
+}
+
+export function depthLevel(d) {
+  if (d == null) return '';
+  return d < 10 ? 'çok sığ' : d < 30 ? 'sığ' : d < 70 ? 'orta derinlik' : 'derin';
+}
+
 export function formatMessage(e) {
-  const icon = e.mag >= 5 ? '🔴' : e.mag >= 4 ? '🟠' : '🟡';
+  const lv = magLevel(e.mag);
   const when = new Date(e.time).toLocaleString('tr-TR', {
     timeZone: 'Europe/Istanbul',
-    day: '2-digit',
-    month: '2-digit',
+    day: 'numeric',
+    month: 'long',
     hour: '2-digit',
     minute: '2-digit',
   });
+  const mm = /^(.*?)[\s-]*\((.+)\)\s*$/.exec(e.place || '');
+  const place = mm ? `${mm[1].trim() || e.place}, ${mm[2].trim()}` : e.place;
   const src = e.sources.map((s) => `${s.name} M${s.mag.toFixed(1)}`).join(' · ');
-  const depth = e.depth == null ? '—' : `${e.depth.toFixed(1)} km`;
+  const verified = e.sources.length > 1 ? ' ✅ birden fazla kaynakta doğrulandı' : '';
+  const depth = e.depth == null ? '—' : `${e.depth.toFixed(0)} km (${depthLevel(e.depth)})`;
   return (
-    `${icon} Deprem: M${e.mag.toFixed(1)}\n` +
-    `📍 ${e.place}\n` +
-    `🕒 ${when} (TSİ) · Derinlik ${depth}\n` +
-    `📡 ${src}${e.disagree ? '\n⚠ Kaynaklar arasında büyüklük farkı var; ilk değerler güncellenebilir.' : ''}\n` +
-    `🗺 https://www.openstreetmap.org/?mlat=${e.lat}&mlon=${e.lon}#map=9/${e.lat}/${e.lon}`
+    `${lv.icon} ${lv.name} deprem · Büyüklük ${e.mag.toFixed(1)}\n\n` +
+    `📍 ${place}\n` +
+    `🕒 ${when} (TSİ)\n` +
+    `⬇️ Derinlik: ${depth}\n` +
+    `💬 ${lv.effect}\n\n` +
+    `📡 ${src}${verified}${e.disagree ? '\n⚠️ Kaynaklar arasında büyüklük farkı var; ilk değerler güncellenebilir.' : ''}\n` +
+    `🗺 https://www.google.com/maps?q=${e.lat},${e.lon}`
   );
 }

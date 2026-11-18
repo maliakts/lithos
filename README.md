@@ -2,6 +2,8 @@
 
 Türkiye için **canlı deprem haritası**. Üç bağımsız kaynağı birbiriyle çapraz doğrular, depremin olduğu yerdeki hava durumunu gösterir ve yeni depremleri Telegram kanalına otomatik gönderir.
 
+📡 **Canlı bildirimler:** [t.me/lithosdeprem](https://t.me/lithosdeprem)
+
 > **EN:** Live earthquake map for Turkey that cross-checks AFAD, Kandilli and USGS, shows local weather (Open-Meteo) and auto-posts new quakes to a Telegram channel. Zero runtime dependencies (Node.js 20+).
 
 <!-- BURAYA DEMO GIF'İ EKLE: ![demo](docs/demo.gif) -->

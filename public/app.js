@@ -18,7 +18,20 @@ function ago(iso) {
   const h = Math.floor(min / 60);
   return `${h} sa ${min % 60} dk önce`;
 }
+function agoShort(iso) {
+  const min = Math.max(0, Math.floor((Date.now() - Date.parse(iso)) / 60000));
+  if (min < 1) return 'şimdi';
+  if (min < 60) return `${min} dk`;
+  const h = Math.floor(min / 60);
+  return h >= 24 ? `${Math.floor(h / 24)} gün` : `${h} sa ${min % 60} dk`;
+}
+const foldTr = (t) => String(t ?? '').toLocaleLowerCase('tr').replace(/ç/g, 'c').replace(/ğ/g, 'g').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ş/g, 's').replace(/ü/g, 'u');
+function splitPlace(p) {
+  const m = /^(.*?)[\s-]*\((.+)\)\s*$/.exec(p || '');
+  return m ? { name: m[1].trim() || p, prov: m[2].trim() } : { name: p || '—', prov: '' };
+}
 const magColor = (m) => (m >= 5 ? '#ff453a' : m >= 4 ? '#ff9f0a' : m >= 3 ? '#ffd60a' : '#30d158');
+const magName = (m) => (m < 2 ? 'Çok hafif' : m < 3 ? 'Hafif' : m < 4 ? 'Orta-hafif' : m < 5 ? 'Orta' : m < 6 ? 'Kuvvetli' : m < 7 ? 'Çok kuvvetli' : 'Büyük');
 const depthText = (d) => (d == null ? '—' : `${d.toFixed(1)} km`);
 
 /* ================= Harita ================= */
@@ -27,17 +40,18 @@ L.control.zoom({ position: 'bottomright' }).addTo(map);
 map.createPane('labels').style.zIndex = 350;
 map.getPane('labels').style.pointerEvents = 'none';
 
-const CARTO = (style) => `https://{s}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png`;
+const ESRI = (path, opt = {}) =>
+  L.tileLayer(`https://server.arcgisonline.com/ArcGIS/rest/services/${path}/MapServer/tile/{z}/{y}/{x}`, {
+    attribution: 'Harita © Esri, Maxar, Earthstar Geographics, OpenStreetMap katkıda bulunanlar',
+    maxZoom: 14,
+    ...opt,
+  });
+const LABELS = { pane: 'labels', maxNativeZoom: 13 };
 const BASES = {
-  sat: [
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Görüntü © Esri, Maxar, Earthstar Geographics',
-      maxZoom: 14,
-    }),
-    L.tileLayer(CARTO('dark_only_labels'), { pane: 'labels', attribution: '© OpenStreetMap, © CARTO', maxZoom: 14 }),
-  ],
-  dark: [L.tileLayer(CARTO('dark_all'), { attribution: '© OpenStreetMap, © CARTO', maxZoom: 14 })],
-  light: [L.tileLayer(CARTO('rastertiles/voyager'), { attribution: '© OpenStreetMap, © CARTO', maxZoom: 14 })],
+  sat: [ESRI('World_Imagery'), ESRI('Reference/World_Boundaries_and_Places', LABELS)],
+  terrain: [ESRI('World_Topo_Map')],
+  dark: [ESRI('Canvas/World_Dark_Gray_Base', { maxNativeZoom: 16 }), ESRI('Canvas/World_Dark_Gray_Reference', { ...LABELS, maxNativeZoom: 16 })],
+  light: [ESRI('World_Street_Map')],
 };
 let baseKey = null;
 function setBase(key) {
@@ -68,29 +82,35 @@ async function togglePlates() {
 }
 
 /* ================= Durum ================= */
-const state = { items: [], status: null, hours: 24, minMag: 0, selected: null };
+const state = { items: [], status: null, hours: 24, minMag: 0, selected: null, q: '' };
 const markers = new Map();
 const layer = L.layerGroup().addTo(map);
 let selRing = null;
 
 function visible() {
   const since = Date.now() - state.hours * 3600 * 1000;
-  return state.items.filter((e) => e.mag >= state.minMag && Date.parse(e.time) >= since);
+  const q = foldTr(state.q.trim());
+  return state.items.filter((e) => e.mag >= state.minMag && Date.parse(e.time) >= since && (!q || foldTr(`${e.place} ${e.province ?? ''}`).includes(q)));
 }
 
 /* ================= Çizim ================= */
+const orbSize = (m) => Math.round(16 + m * 7.5);
 function renderMap(items) {
   layer.clearLayers();
   markers.clear();
   for (const e of [...items].reverse()) {
     const c = magColor(e.mag);
-    const m = L.circleMarker([e.lat, e.lon], {
-      radius: 3.5 + e.mag * 2.5,
-      color: 'rgba(255,255,255,0.85)',
-      weight: 1,
-      fillColor: c,
-      fillOpacity: 0.62,
+    const d = orbSize(e.mag);
+    const m = L.marker([e.lat, e.lon], {
+      zIndexOffset: Math.round(e.mag * 100),
+      riseOnHover: true,
+      keyboard: false,
       bubblingMouseEvents: false,
+      icon: L.divIcon({
+        className: 'eqwrap',
+        iconSize: [d, d],
+        html: `<span class="eqm${e.mag >= 5 ? ' big' : ''}" style="--c:${c};--d:${d}px" title="M${e.mag.toFixed(1)} · ${esc(e.place)}"><i class="r1"></i><i class="r2"></i><i class="core"></i>${e.mag >= 3 ? `<b>${e.mag.toFixed(1)}</b>` : ''}</span>`,
+      }),
     });
     m.on('click', () => select(e.id, true));
     m.addTo(layer);
@@ -110,25 +130,54 @@ function drawSelection() {
   if (selRing) map.removeLayer(selRing);
   selRing = null;
   const e = state.items.find((x) => x.id === state.selected);
-  if (e) selRing = L.circleMarker([e.lat, e.lon], { radius: 9 + e.mag * 2.5, color: '#fff', weight: 2.5, fill: false }).addTo(map);
+  if (e) selRing = L.circleMarker([e.lat, e.lon], { radius: orbSize(e.mag) / 2 + 5, color: '#fff', weight: 2.5, fill: false }).addTo(map);
 }
 
 function renderList(items) {
   const list = $('list');
   if (!items.length) {
-    list.innerHTML = `<li class="empty">Bu filtrede deprem yok.</li>`;
+    list.innerHTML = `<li class="empty"><b>Deprem bulunamadı</b><span>Filtreyi ya da aramayı değiştirmeyi dene.</span></li>`;
     return;
   }
-  list.innerHTML = items
-    .slice(0, 300)
-    .map(
-      (e) => `<li><button class="row${e.id === state.selected ? ' sel' : ''}" data-id="${esc(e.id)}">
-        <span class="badge" style="background:${magColor(e.mag)}">${e.mag.toFixed(1)}</span>
-        <span class="meta"><b>${esc(e.place)}</b>
-        <small>${ago(e.time)} · ${depthText(e.depth)}${e.disagree ? ' · <span class="warnmark" title="Kaynaklar arasında fark var">⚠</span>' : ''}${e.sources.length > 1 ? ' · çift kaynak' : ` · ${esc(e.sources[0].name)}`}</small></span>
-      </button></li>`,
-    )
-    .join('');
+  const now = Date.now();
+  const groupOf = (e) => {
+    const h = (now - Date.parse(e.time)) / 3600000;
+    return h < 1 ? 'Son 1 saat' : h < 6 ? '1–6 saat önce' : '6 saatten eski';
+  };
+  let last = '';
+  const out = [];
+  for (const e of items.slice(0, 300)) {
+    const g = groupOf(e);
+    if (g !== last) { out.push(`<li class="grp" aria-hidden="true">${g}</li>`); last = g; }
+    const { name, prov } = splitPlace(e.place);
+    const both = e.sources.length > 1;
+    const pills = e.sources.map((x) => `<span class="pill">${esc(x.name === 'Kandilli' ? 'KRDAE' : x.name)}</span>`).join('');
+    out.push(`<li><button class="row${e.id === state.selected ? ' sel' : ''}" data-id="${esc(e.id)}" style="--c:${magColor(e.mag)}">
+        <span class="badge">${e.mag.toFixed(1)}</span>
+        <span class="meta"><b>${esc(name)}</b>
+          <small>${prov ? esc(prov) + ' · ' : ''}${depthText(e.depth)}${e.disagree ? ' <span class="warnmark" title="Kaynaklar arasında fark var">⚠</span>' : ''}</small></span>
+        <span class="side"><time>${agoShort(e.time)}</time><span class="pills${both ? ' ok' : ''}" title="${both ? 'İki kaynakta doğrulandı' : 'Tek kaynak'}">${pills}</span></span>
+      </button></li>`);
+  }
+  list.innerHTML = out.join('');
+}
+
+function renderSpark(items) {
+  const el = $('spark');
+  const H = state.hours;
+  const n = H <= 1 ? 12 : H <= 6 ? 12 : 24;
+  const span = H * 3600000;
+  const step = span / n;
+  const end = Date.now();
+  const b = Array.from({ length: n }, () => ({ c: 0, m: 0 }));
+  for (const e of items) {
+    const i = n - 1 - Math.floor((end - Date.parse(e.time)) / step);
+    if (i >= 0 && i < n) { b[i].c++; b[i].m = Math.max(b[i].m, e.mag); }
+  }
+  const peak = Math.max(1, ...b.map((x) => x.c));
+  const label = H <= 1 ? '5 dk' : H <= 6 ? '30 dk' : '1 sa';
+  $('axL').textContent = H <= 1 ? '1 saat önce' : H <= 6 ? '6 saat önce' : '24 saat önce';
+  el.innerHTML = b.map((x) => `<i title="${x.c} deprem · ${label}lık aralık" style="height:${x.c ? 12 + (x.c / peak) * 88 : 6}%;background:${x.c ? magColor(x.m) : 'rgba(255,255,255,.12)'}"></i>`).join('');
 }
 
 function renderChips() {
@@ -157,8 +206,21 @@ function renderChips() {
   $('chips').innerHTML = chips.join('');
 }
 
+function renderStats(items) {
+  const el = $('stats');
+  if (!items.length) { el.innerHTML = ''; return; }
+  const top = items.reduce((a, b) => (b.mag > a.mag ? b : a), items[0]);
+  const last = items[0];
+  el.innerHTML = `
+    <div class="stat"><small>Deprem</small><b>${items.length}</b></div>
+    <button class="stat link" data-id="${esc(top.id)}" title="${esc(top.place)}"><small>En büyük</small><b style="color:${magColor(top.mag)}">M${top.mag.toFixed(1)}</b></button>
+    <button class="stat link" data-id="${esc(last.id)}" title="${esc(last.place)}"><small>En yeni</small><b>${agoShort(last.time)}</b></button>`;
+}
+
 function render() {
   const items = visible();
+  renderStats(items);
+  renderSpark(items);
   renderList(items);
   renderMap(items);
   renderChips();
@@ -196,7 +258,7 @@ map.on('click', (ev) => {
   const box = document.createElement('div');
   box.className = 'wx';
   box.innerHTML = '<small class="wx-sub">Hava durumu yükleniyor…</small>';
-  L.popup({ className: 'glass-popup', maxWidth: 260, closeButton: false }).setLatLng(ev.latlng).setContent(box).openOn(map);
+  L.popup({ className: 'glass-popup', minWidth: 250, maxWidth: 280, closeButton: false, autoPanPaddingTopLeft: isMobile() ? [10, 70] : [400, 70], autoPanPaddingBottomRight: [20, 20] }).setLatLng(ev.latlng).setContent(box).openOn(map);
   fillWeather(box, ev.latlng.lat, ev.latlng.lng);
 });
 
@@ -218,8 +280,8 @@ function renderDetail(animate = true) {
       : `<div class="note info">AFAD ve Kandilli kayıtları uyumlu.</div>`;
   d.innerHTML = `
     <button class="back" id="back">‹ Depremler</button>
-    <div class="bigmag"><span class="badge" style="background:${magColor(e.mag)}">${e.mag.toFixed(1)}</span>
-      <div><h2>${esc(e.place)}</h2><p>${ago(e.time)}</p></div></div>
+    <div class="bigmag"><span class="badge" style="--c:${magColor(e.mag)}">${e.mag.toFixed(1)}</span>
+      <div><h2>${esc(e.place)}</h2><p><b class="lvl" style="color:${magColor(e.mag)}">${magName(e.mag)} deprem</b> · ${ago(e.time)}</p></div></div>
     <div class="grid">
       <div><small>Zaman (TSİ)</small><span>${fmtAbs(e.time)}</span></div>
       <div><small>Derinlik</small><span>${depthText(e.depth)}</span></div>
@@ -284,6 +346,11 @@ bindSeg('segBase', setBase);
 bindSeg('segTime', (v) => { state.hours = Number(v); render(); });
 bindSeg('segMag', (v) => { state.minMag = Number(v); render(); });
 $('plates').addEventListener('click', togglePlates);
+$('q').addEventListener('input', (ev) => { state.q = ev.target.value; render(); });
+$('stats').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-id]');
+  if (b) select(b.dataset.id, true);
+});
 $('list').addEventListener('click', (ev) => {
   const b = ev.target.closest('.row');
   if (b) select(b.dataset.id, true);
@@ -441,3 +508,7 @@ for (const b of $('segTime').children) b.setAttribute('aria-checked', String(Num
 initial();
 connect();
 setInterval(render, 30000); // "x dk önce" yazıları ve bayatlık göstergeleri tazelensin
+
+fetch('/api/config').then((r) => r.json()).then((c) => {
+  if (c.channelUrl) { const t = $('tg'); t.href = c.channelUrl; t.hidden = false; }
+}).catch(() => {});

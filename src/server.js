@@ -28,6 +28,7 @@ app = createApp({
     { name: usgs.NAME, fetchRecent: () => usgs.fetchRecent(), allowEmpty: true },
   ],
   pollMs: POLL_MS,
+  channelUrl: process.env.TELEGRAM_CHANNEL_URL || null,
   publicDir: path.join(ROOT, 'public'),
   weather: createWeatherService(),
   bot,

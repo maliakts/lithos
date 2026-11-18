@@ -4,7 +4,7 @@
   --muted: rgba(235, 235, 245, 0.6);
   --faint: rgba(235, 235, 245, 0.3);
   --line: rgba(255, 255, 255, 0.1);
-  --glass: rgba(28, 28, 30, 0.58);
+  --glass: rgba(20, 20, 24, 0.74);
   --green: #30d158;
   --yellow: #ffd60a;
   --orange: #ff9f0a;
@@ -113,7 +113,7 @@ h1 { margin: 0; font: 700 28px/1.1 var(--font-display); letter-spacing: -0.022em
 /* ---------- Harita kontrolleri ---------- */
 .mapctl { position: fixed; z-index: 1000; top: 14px; right: 14px; display: flex; gap: 8px; align-items: center; padding: 6px; border-radius: 16px; }
 .mapctl .seg { background: rgba(118, 118, 128, 0.2); }
-.mapctl .seg button { padding: 6px 12px; }
+.mapctl .seg button { padding: 6px 11px; }
 .toggle { padding: 7px 12px; border-radius: 10px; font-size: 13px; font-weight: 500; background: rgba(118, 118, 128, 0.2); transition: background 0.25s var(--ease); }
 .toggle[aria-pressed="true"] { background: var(--orange); color: #111; font-weight: 600; }
 .leaflet-bottom.leaflet-right { margin-bottom: 4px; }
@@ -155,3 +155,136 @@ h1 { margin: 0; font: 700 28px/1.1 var(--font-display); letter-spacing: -0.022em
   .glass { background: #000; border-color: #fff; }
   .meta small, .chip, .grid small { color: #fff; }
 }
+
+/* ---------- Özet kartları ---------- */
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 6px 18px 4px; }
+.stats:empty { display: none; }
+.stat { text-align: left; padding: 9px 12px; border-radius: 14px; background: rgba(255, 255, 255, 0.07); border: 1px solid var(--line); display: grid; gap: 2px; min-width: 0; }
+.stat small { color: var(--muted); font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; }
+.stat b { font: 700 17px/1.15 var(--font-display); letter-spacing: -0.015em; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stat.link { transition: background 0.2s, transform 0.2s var(--ease); }
+.stat.link:hover { background: rgba(255, 255, 255, 0.13); }
+.stat.link:active { transform: scale(0.97); }
+
+/* ---------- İşaretçi parıltısı ---------- */
+.leaflet-overlay-pane path.eq { filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.45)); transition: fill-opacity 0.2s; }
+.leaflet-overlay-pane path.eq:hover { fill-opacity: 0.9; }
+
+/* ---------- Renk göstergesi ---------- */
+.legend { position: fixed; z-index: 1000; right: 14px; bottom: 34px; display: flex; gap: 12px; padding: 8px 14px; border-radius: 14px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px currentColor; }
+
+/* ---------- Hava durumu kutusu: düzgün sığsın ---------- */
+.wx-main { flex-wrap: nowrap; }
+.wx-txt b { white-space: normal; line-height: 1.2; }
+.glass-popup .leaflet-popup-content { width: auto !important; min-width: 230px; }
+.glass-popup .wx { min-width: 230px; }
+.leaflet-popup-content-wrapper { color: var(--text); }
+@media (max-width: 760px) { .legend { display: none; } }
+
+/* ---------- Panel v2 ---------- */
+#panel.glass { background: linear-gradient(180deg, rgba(30, 30, 36, 0.86), rgba(14, 14, 18, 0.82)); }
+.spark { display: flex; align-items: flex-end; gap: 3px; height: 38px; margin: 6px 18px 2px; padding-bottom: 2px; }
+.spark i { flex: 1; min-width: 3px; border-radius: 3px 3px 1px 1px; opacity: 0.92; transition: height 0.5s var(--ease); }
+.search { display: flex; align-items: center; gap: 8px; padding: 0 12px; border-radius: 10px; background: rgba(118, 118, 128, 0.24); color: var(--muted); }
+.search input { flex: 1; min-width: 0; height: 34px; background: none; border: 0; outline: 0; color: var(--text); font: inherit; font-size: 14px; }
+.search input::placeholder { color: var(--faint); }
+.search:focus-within { box-shadow: 0 0 0 2px rgba(10, 132, 255, 0.55); }
+.search input::-webkit-search-cancel-button { filter: invert(1) opacity(0.6); }
+
+.list { padding-top: 0; }
+.grp { position: sticky; top: 0; z-index: 2; padding: 9px 18px 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); background: linear-gradient(180deg, rgba(22, 22, 26, 0.96) 60%, rgba(22, 22, 26, 0)); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.row { position: relative; gap: 12px; padding: 10px 16px 10px 20px; border-radius: 0; }
+.row::before { content: ""; position: absolute; left: 8px; top: 12px; bottom: 12px; width: 3px; border-radius: 2px; background: var(--c); opacity: 0.85; box-shadow: 0 0 10px var(--c); }
+.badge { width: 50px; padding: 9px 0; border-radius: 15px; font-size: 19px; background: linear-gradient(160deg, color-mix(in srgb, var(--c) 100%, #fff 18%), var(--c)) !important; box-shadow: 0 4px 14px color-mix(in srgb, var(--c) 40%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.4); }
+.meta { flex: 1; }
+.meta b { font-size: 16px; letter-spacing: -0.01em; }
+.meta small { font-size: 13px; }
+.side { flex: none; display: grid; justify-items: end; gap: 5px; }
+.side time { font-size: 12.5px; font-weight: 600; color: var(--text); opacity: 0.85; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pills { display: inline-flex; gap: 3px; }
+.pill { padding: 1px 6px; border-radius: 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; color: var(--muted); background: rgba(255, 255, 255, 0.09); }
+.pills.ok .pill { color: #7ee2a0; background: rgba(48, 209, 88, 0.16); }
+.empty { display: grid; gap: 6px; }
+.empty b { color: var(--text); font-size: 16px; }
+.stat b { font-size: 18px; }
+
+/* ---------- Panel v3: cila ---------- */
+.brand { gap: 12px; justify-content: flex-start; }
+.brand .live { margin-left: auto; padding: 4px 10px; border-radius: 999px; background: rgba(48, 209, 88, 0.14); }
+.brand .live.off { background: rgba(255, 69, 58, 0.16); }
+.logo { flex: none; display: grid; filter: drop-shadow(0 4px 12px rgba(255, 55, 95, 0.45)); }
+.title h1 { font-size: 24px; }
+.title p { margin: 1px 0 0; font-size: 12px; color: var(--muted); letter-spacing: 0.01em; }
+header { padding: 16px 18px 4px; }
+.chips { margin-top: 12px; flex-wrap: nowrap; overflow: hidden; }
+.chip { white-space: nowrap; padding: 3px 9px; font-size: 11.5px; }
+.rowseg { display: flex; gap: 8px; }
+.rowseg #segTime { flex: 0 0 auto; }
+.rowseg #segTime button { padding: 6px 9px; }
+.rowseg #segMag { flex: 1; }
+.rowseg #segMag button { padding: 6px 0; }
+.controls { padding-bottom: 10px; gap: 8px; }
+.stats { padding-top: 10px; }
+.stat { background: linear-gradient(160deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.04)); }
+.spark { margin-top: 10px; margin-bottom: 0; height: 34px; }
+.sparkax { display: flex; justify-content: space-between; margin: 3px 18px 6px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--faint); }
+.list::after { content: ""; display: block; height: 18px; }
+.views::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 28px; pointer-events: none; background: linear-gradient(0deg, rgba(14, 14, 18, 0.9), transparent); }
+.row.sel { background: linear-gradient(90deg, rgba(10, 132, 255, 0.3), rgba(10, 132, 255, 0.1)); }
+.row.sel::before { width: 4px; }
+
+/* Haritada büyük depremlerin büyüklük etiketi */
+.maglabel b { position: absolute; transform: translate(-50%, -50%); padding: 1px 6px; border-radius: 8px; font: 700 12px/1.3 var(--font-display); color: #111; background: var(--c); border: 1.5px solid rgba(255, 255, 255, 0.9); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5); font-variant-numeric: tabular-nums; pointer-events: none; }
+
+/* Gösterge: zoom düğmeleriyle çakışmasın, haritanın sol altına otursun */
+@media (min-width: 761px) { .legend { right: auto; left: 400px; bottom: 28px; } }
+.leaflet-bar { border: 1px solid var(--line) !important; border-radius: 14px !important; overflow: hidden; background: var(--glass); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important; }
+.leaflet-bar a { background: transparent !important; color: var(--text) !important; border-bottom: 1px solid var(--line) !important; width: 36px !important; height: 36px !important; line-height: 36px !important; font-size: 18px; }
+.leaflet-bar a:last-child { border-bottom: 0 !important; }
+.leaflet-bar a:hover { background: rgba(255, 255, 255, 0.12) !important; }
+.leaflet-bottom.leaflet-right { margin-bottom: 14px; margin-right: 4px; }
+.rowseg .seg button { white-space: nowrap; font-size: 12.5px; }
+.rowseg #segTime button { padding: 6px 7px; }
+.rowseg #segMag button { padding: 6px 2px; min-width: 0; }
+.rowseg #segMag button:first-child { flex: 1.5; }
+.lvl{font-weight:700}
+
+/* Logo: gerçek amblem, cam zeminde parıltılı */
+.logo { position: relative; width: 50px; height: 50px; border-radius: 15px; place-items: center; background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.04) 70%); border: 1px solid var(--line); border-top-color: rgba(255, 255, 255, 0.28); filter: none; box-shadow: 0 6px 22px rgba(255, 55, 75, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.18); }
+.logo img { width: 40px; height: 40px; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(255, 60, 70, 0.55)); }
+.title h1 { font-size: 25px; }
+
+/* Telegram kanal butonu */
+.tg { display: flex; align-items: center; gap: 11px; margin: 10px 18px 2px; padding: 9px 12px; border-radius: 14px; text-decoration: none; color: #fff; background: linear-gradient(120deg, #2aabee, #229ed9 55%, #1b86c4); box-shadow: 0 6px 18px rgba(34, 158, 217, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3); transition: transform 0.25s var(--ease), filter 0.2s; }
+.tg[hidden] { display: none; }
+.tg:hover { filter: brightness(1.08); }
+.tg:active { transform: scale(0.98); }
+.tg svg { flex: none; }
+.tg span { display: grid; min-width: 0; line-height: 1.2; }
+.tg b { font-size: 13.5px; font-weight: 650; }
+.tg small { font-size: 11.5px; opacity: 0.85; }
+.tg i { margin-left: auto; font-style: normal; font-size: 22px; opacity: 0.8; }
+
+/* Şık, ince kaydırma çubuğu */
+.list, .detail { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.26) transparent; scrollbar-gutter: stable; }
+.list::-webkit-scrollbar, .detail::-webkit-scrollbar { width: 10px; }
+.list::-webkit-scrollbar-track, .detail::-webkit-scrollbar-track { background: transparent; margin: 8px 0; }
+.list::-webkit-scrollbar-thumb, .detail::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.22); border-radius: 10px; border: 3px solid transparent; background-clip: content-box; }
+.list::-webkit-scrollbar-thumb:hover, .detail::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); background-clip: content-box; }
+.list::-webkit-scrollbar-button, .detail::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+
+/* Haritadaki depremler: merkez üssü + yayılan sismik halkalar */
+.eqwrap { background: none; border: 0; }
+.eqm { position: relative; display: block; width: var(--d); height: var(--d); cursor: pointer; transition: transform 0.25s var(--ease); }
+.eqm:hover { transform: scale(1.15); }
+.eqm i { position: absolute; border-radius: 50%; }
+.eqm .r1 { inset: 0; border: 1.5px solid color-mix(in srgb, var(--c) 90%, #fff); background: radial-gradient(circle, color-mix(in srgb, var(--c) 34%, transparent), color-mix(in srgb, var(--c) 8%, transparent)); box-shadow: 0 0 16px color-mix(in srgb, var(--c) 45%, transparent); }
+.eqm .r2 { inset: 24%; border: 1.5px solid color-mix(in srgb, var(--c) 95%, #fff); background: color-mix(in srgb, var(--c) 30%, transparent); }
+.eqm .core { left: 50%; top: 50%; width: 30%; height: 30%; min-width: 7px; min-height: 7px; transform: translate(-50%, -50%); background: var(--c); border: 2px solid #fff; box-shadow: 0 0 10px var(--c), 0 1px 4px rgba(0, 0, 0, 0.6); }
+.eqm.big .r1 { border-width: 2px; border-style: dashed; animation: spin 14s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.eqm b { position: absolute; left: 50%; top: 100%; transform: translate(-50%, -6px); padding: 1px 7px; border-radius: 999px; font: 800 11.5px/1.35 var(--font-display); letter-spacing: -0.01em; color: var(--c); background: rgba(10, 10, 14, 0.86); border: 1px solid color-mix(in srgb, var(--c) 70%, transparent); box-shadow: 0 3px 10px rgba(0, 0, 0, 0.55); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.maglabel { display: none; }
+@media (prefers-reduced-motion: reduce) { .eqm.big .r1 { animation: none; } }

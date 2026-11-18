@@ -11,13 +11,14 @@ const MIME = {
   '.js': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.svg': 'image/svg+xml',
+  '.png': 'image/png',
   '.json': 'application/json; charset=utf-8',
 };
 
 /**
  * @param sources [{ name: 'AFAD', fetchRecent }, { name: 'Kandilli', fetchRecent }]
  */
-export function createApp({ sources, pollMs = 60000, publicDir, weather = null, bot = null, subs = null, channel = null, now = () => Date.now(), log = console }) {
+export function createApp({ sources, pollMs = 60000, publicDir, weather = null, bot = null, subs = null, channel = null, channelUrl = null, now = () => Date.now(), log = console }) {
   const health = {};
   const data = {};
   for (const s of sources) {
@@ -102,6 +103,10 @@ export function createApp({ sources, pollMs = 60000, publicDir, weather = null, 
 
   const handler = (req, res) => {
     const url = new URL(req.url, 'http://localhost');
+    if (url.pathname === '/api/config') {
+      res.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
+      return res.end(JSON.stringify({ channelUrl: /^https:\/\/t\.me\//.test(channelUrl || '') ? channelUrl : null }));
+    }
     if (url.pathname === '/api/earthquakes') {
       res.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
       return res.end(JSON.stringify(snapshot()));

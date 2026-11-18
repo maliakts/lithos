@@ -22,5 +22,7 @@ test('mesajda kaynaklar ve uyarı yer alır', () => {
   assert.match(m, /M4\.5/);
   assert.match(m, /AFAD M4\.5 · Kandilli M4\.1/);
   assert.match(m, /farkı var/);
-  assert.match(m, /openstreetmap/);
+  assert.match(m, /google\.com\/maps/);
+  assert.match(m, /Orta deprem/);
+  assert.match(m, /Yeşilyurt, Malatya/);
 });
