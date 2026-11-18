@@ -14,6 +14,8 @@ const minMag = Number(process.env.CHANNEL_MIN_MAG ?? 2.5) || 0;
 const maxAgeMs = 60 * 60 * 1000; // en fazla 1 saat önceki depremler (Actions gecikmesi için pay)
 if (!token || !chat) { console.error('TELEGRAM_BOT_TOKEN ve TELEGRAM_CHANNEL gerekli.'); process.exit(1); }
 
+console.log(`Bot kimliği: ${token.split(':')[0]} | kanal: ${chat} | belirteç uzunluğu: ${token.length}`);
+
 const file = path.join('.cache', 'posted.json');
 fs.mkdirSync('.cache', { recursive: true });
 const firstRun = !fs.existsSync(file);
