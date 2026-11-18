@@ -19,6 +19,13 @@ fs.mkdirSync('.cache', { recursive: true });
 const firstRun = !fs.existsSync(file);
 const posted = new Set(firstRun ? [] : JSON.parse(fs.readFileSync(file, 'utf8')));
 
+// Actions'tan elle başlatılınca (Run workflow) bağlantıyı sınamak için bir deneme mesajı gönderir.
+if (process.env.GITHUB_EVENT_NAME === 'workflow_dispatch') {
+  const r = await telegramCall(token, 'sendMessage', { chat_id: chat, text: '✅ Lithos: GitHub Actions bağlantısı çalışıyor. Yeni depremler (M' + minMag + '+) bu kanala otomatik gelecek.', disable_web_page_preview: true });
+  if (!r.ok) { console.error('Telegram hatası:', r.description); process.exit(1); }
+  console.log('Deneme mesajı gönderildi.');
+}
+
 const lists = {};
 const results = await Promise.allSettled([afad.fetchRecent(), kandilli.fetchRecent()]);
 ['AFAD', 'Kandilli'].forEach((n, i) => {
